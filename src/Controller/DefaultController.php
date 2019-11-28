@@ -11,6 +11,7 @@ use Symfony\Component\Routing\Annotation\Route;
 
 class DefaultController extends AbstractController
 {
+
     /**
      * @Route("/", name="home")
      */
@@ -24,23 +25,40 @@ class DefaultController extends AbstractController
     /**
      * @Route("/about", name="about")
      */
-    public function about(Request $request)
+    public function about (Request $request, \Swift_Mailer $mailer)
     {
+
+
         $form = $this->createForm(ContactType::class);
+
         $form->handleRequest($request);
 
-        if ($form->isSubmitted() && $form->isValid()) {
+        $this->addFlash('info', 'Some useful info');
 
+        if ($form->isSubmitted() && $form->isValid()) {
             $contactFormData = $form->getData();
 
-            dump($contactFormData);
 
-            // do something interesting here
+            $message = (new \Swift_Message('You Got Mail!'))
+                ->setFrom($contactFormData['email'])
+                ->setTo('r.vandegraaf45@gmail.com')
+                ->setBody(
+                    $contactFormData['message'],
+                    'text/plain');
+
+
+            $mailer->send($message);
+
+            $this->addFlash('success', 'It sent!');
+
+            return $this->redirectToRoute('about');
         }
 
         return $this->render('default/about.html.twig', [
             'our_form' => $form->createView(),
         ]);
+
+
     }
 
     /**
